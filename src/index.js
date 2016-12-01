@@ -89,8 +89,8 @@ const TodoList = (({todos, onTodoClick}) => (
 	</ol>
 ));
 
-const FilterLink = (({filter, currentFilter, onClick, children}) => {
-	if (filter === currentFilter) {
+const Link = ({active, children, onClick}) => {
+	if (active) {
 		return (
 			<span>{children}</span>
 		);
@@ -99,13 +99,38 @@ const FilterLink = (({filter, currentFilter, onClick, children}) => {
 		<a href="#"
 			onClick={e => {
 				e.preventDefault();
-				onClick(filter);
+				onClick();
 			}}
 		>
 		{children}
 		</a>
 	);
-});
+};
+
+class FilterLink extends Component {
+	componentDidMount() {
+		this.unsubscribe = store.subscribe(() => {this.forceUpdate()});
+	}
+
+	componentWillUnmount() {
+		this.unsubscribe();
+	}
+
+	render() {
+		const props = this.props;
+		const state = store.getState();
+
+		return (
+			<Link
+				active={props.filter === state.visibilityFilter}
+				onClick={() => store.dispatch({type:'SET_VISIBILITY_FILTER', filter: props.filter})}
+			>
+			{props.children}
+			</Link>
+		);
+	}
+
+}
 
 const Footer = ({visibilityFilter, onFilterClick}) => {
 	return (
@@ -152,12 +177,7 @@ class TodoApp extends Component {
 		    	onTodoClick={(id) => {store.dispatch(
 		    		{type: 'TOGGLE_TODO', id: id }
 		    )}}/>
-		    <Footer 
-		    	visibilityFilter={visibilityFilter}
-		    	onFilterClick={filter => {
-		    		store.dispatch({type:'SET_VISIBILITY_FILTER', filter: filter})
-		    	}}
-		    />
+		    <Footer />
 		  </div>
 		);
 	}
